@@ -1,6 +1,8 @@
-# Screenshots directory
+# Screenshots and camera images directories
 screenshots/
 screenshots_*/
+camera_images/
+camera_images_*/
 
 # Python
 __pycache__/

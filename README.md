@@ -1,13 +1,14 @@
-# Desktop Screen Recorder
+# Camera Recorder
 
-A Python-based desktop screen recorder that captures screenshots at regular intervals.
+A Python-based camera recorder that captures images from your laptop camera at regular intervals.
 
 ## Features
 
-- Captures desktop screenshots at 1-second intervals
+- Captures images from laptop webcam at 1-second intervals
 - Records for a total duration of 5 seconds (configurable)
-- Saves screenshots as PNG images with timestamps
+- Saves images as JPG files with timestamps
 - Cross-platform support (Windows, macOS, Linux)
+- Easy to use and customize
 
 ## Installation
 
@@ -26,55 +27,65 @@ pip install -r requirements.txt
 
 ### Basic Usage
 
-Run the screen recorder with default settings (5 seconds duration, 1 second interval):
+Run the camera recorder with default settings (5 seconds duration, 1 second interval):
 
 ```bash
-python screen_recorder.py
+python camera_recorder.py
 ```
 
 This will:
-- Create a `screenshots` directory
-- Capture 5 screenshots (one every second)
-- Save them as `screenshot_001_<timestamp>.png`, `screenshot_002_<timestamp>.png`, etc.
+- Create a `camera_images` directory
+- Capture 5 images from your camera (one every second)
+- Save them as `camera_001_<timestamp>.jpg`, `camera_002_<timestamp>.jpg`, etc.
 
 ### Custom Usage
 
-You can also import and use the `ScreenRecorder` class in your own code:
+You can also import and use the `CameraRecorder` class in your own code:
 
 ```python
-from screen_recorder import ScreenRecorder
+from camera_recorder import CameraRecorder
 
 # Create a recorder with custom settings
-recorder = ScreenRecorder(
-    output_dir="my_screenshots",  # Custom output directory
-    duration=10,                   # Record for 10 seconds
-    interval=2                     # Capture every 2 seconds
+recorder = CameraRecorder(
+    output_dir="my_camera_images",  # Custom output directory
+    duration=10,                     # Record for 10 seconds
+    interval=2,                      # Capture every 2 seconds
+    camera_index=0                   # Camera device (0=default, 1=external, etc.)
 )
 
 # Start recording
-screenshots = recorder.record()
+images = recorder.record()
 
-# Access the list of captured screenshot paths
-for screenshot in screenshots:
-    print(screenshot)
+# Access the list of captured image paths
+for image in images:
+    print(image)
 ```
 
 ## Requirements
 
 - Python 3.6+
-- mss (for fast screen capture)
-- Pillow (for image processing)
+- OpenCV (opencv-python) for camera access
+- NumPy for image processing
+- A working webcam/camera
 
 ## Output
 
-Screenshots are saved in the `screenshots` directory (or your custom directory) with the following naming convention:
+Camera images are saved in the `camera_images` directory (or your custom directory) with the following naming convention:
 
 ```
-screenshot_001_20231115_143022.png
-screenshot_002_20231115_143023.png
-screenshot_003_20231115_143024.png
+camera_001_20231115_143022.jpg
+camera_002_20231115_143023.jpg
+camera_003_20231115_143024.jpg
 ...
 ```
+
+## Troubleshooting
+
+**Camera not working?**
+- Make sure your camera is not being used by another application
+- Check that your camera is properly connected and enabled
+- Try different camera indices (0, 1, 2) if you have multiple cameras
+- On Linux, you may need to install additional packages: `sudo apt-get install libopencv-dev python3-opencv`
 
 ## License
 
