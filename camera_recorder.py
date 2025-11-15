@@ -11,7 +11,7 @@ import cv2
 
 
 class CameraRecorder:
-    def __init__(self, output_dir="camera_images", duration=5, interval=1, camera_index=0):
+    def __init__(self, output_dir="camera_images", duration=5, interval=1, camera_index=1):
         """
         Initialize the camera recorder.
 
