@@ -58,9 +58,8 @@ class CameraRecorder:
                 try:
                     camera = cv2.VideoCapture(index, backend)
                     if camera.isOpened():
-                        # Test if we can actually read from the camera
-                        ret, _ = camera.read()
-                        if ret:
+                        # Test if we can actually read valid frames from the camera
+                        if self._validate_camera(camera):
                             print(f"✓ Found working camera: index={index}, backend={backend_name}")
                             return camera, index
                         camera.release()
@@ -68,6 +67,49 @@ class CameraRecorder:
                     pass
 
         return None, None
+
+    def _validate_camera(self, camera):
+        """
+        Validate that a camera can provide valid frames.
+
+        Args:
+            camera: OpenCV VideoCapture object
+
+        Returns:
+            bool: True if camera provides valid frames, False otherwise
+        """
+        # Try reading a few frames to ensure camera is stable
+        for attempt in range(3):
+            ret, frame = camera.read()
+
+            if not ret:
+                return False
+
+            # Validate frame properties
+            if frame is None:
+                return False
+
+            # Check frame has valid shape
+            if not hasattr(frame, 'shape') or len(frame.shape) != 3:
+                return False
+
+            # Check frame has reasonable dimensions
+            height, width = frame.shape[:2]
+            if height < 10 or width < 10 or height > 10000 or width > 10000:
+                return False
+
+            # Check frame data type
+            if frame.dtype != np.uint8:
+                return False
+
+            # Check frame is not all zeros
+            if np.sum(frame) == 0:
+                continue  # First frame might be black, try next
+
+            # Frame is valid
+            return True
+
+        return False
 
     def create_mock_camera(self):
         """
@@ -127,9 +169,23 @@ class CameraRecorder:
         if not ret:
             raise Exception("Failed to capture image from camera")
 
+        # Validate frame before saving
+        if frame is None:
+            raise Exception("Camera returned None frame")
+
+        if not hasattr(frame, 'shape') or len(frame.shape) != 3:
+            raise Exception(f"Invalid frame shape: {frame.shape if hasattr(frame, 'shape') else 'no shape'}")
+
+        height, width = frame.shape[:2]
+        if height < 10 or width < 10:
+            raise Exception(f"Frame dimensions too small: {width}x{height}")
+
         # Save the image
         filepath = os.path.join(self.output_dir, filename)
-        cv2.imwrite(filepath, frame)
+        success = cv2.imwrite(filepath, frame)
+
+        if not success:
+            raise Exception(f"Failed to write image to {filepath}")
 
         return filepath
 
@@ -150,10 +206,16 @@ class CameraRecorder:
             camera = self.create_mock_camera()
             self.camera_index = -1  # Indicate mock camera
         elif self.camera_index is not None:
-            # Try specific camera index
+            # Try specific camera index with validation
             print(f"Attempting to open camera index {self.camera_index}...")
             camera = cv2.VideoCapture(self.camera_index)
-            if not camera.isOpened():
+            if camera.isOpened():
+                # Validate that camera can provide valid frames
+                if not self._validate_camera(camera):
+                    print(f"⚠ Camera {self.camera_index} opened but cannot provide valid frames")
+                    camera.release()
+                    camera = None
+            else:
                 camera = None
         else:
             # Auto-detect camera
@@ -175,9 +237,14 @@ class CameraRecorder:
         camera.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
         camera.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
 
-        # Allow camera to warm up
+        # Warm up camera by reading and discarding a few frames
         if not self.test_mode:
-            time.sleep(0.5)
+            print("Warming up camera...")
+            for i in range(5):
+                ret, _ = camera.read()
+                if not ret:
+                    print(f"⚠ Warning: Failed to read warmup frame {i+1}/5")
+            time.sleep(0.3)
 
         camera_type = "Mock Camera (Test Mode)" if self.test_mode else f"Camera {self.camera_index}"
         print(f"\n✓ Successfully initialized: {camera_type}")
