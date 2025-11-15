@@ -3,6 +3,8 @@ screenshots/
 screenshots_*/
 camera_images/
 camera_images_*/
+vibe_images/
+vibe_images_*/
 
 # Python
 __pycache__/
